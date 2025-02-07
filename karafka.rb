@@ -64,3 +64,14 @@ class KarafkaApp < Karafka::App
   end
 end
 
+# Karafka now features a Web UI!
+# Visit the setup documentation to get started and enhance your experience.
+#
+# https://karafka.io/docs/Web-UI-Getting-Started
+
+Karafka::Web.setup do |config|
+  # You may want to set it per ENV. This value was randomly generated.
+  config.ui.sessions.secret = 'xxx' # should be generate by bundle exec karafka-web install
+end
+
+Karafka::Web.enable!

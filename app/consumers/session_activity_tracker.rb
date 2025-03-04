@@ -21,6 +21,7 @@ class SessionActivityTracker < ApplicationConsumer
 
   private
 
+# Records the earliest activity time for each user-session pair
   def track_activity(message)
     user_id = message.payload['user_id']
     session_id = message.payload['session_id']
@@ -35,6 +36,7 @@ class SessionActivityTracker < ApplicationConsumer
     end
   end
 
+  # Fetch inactive sessions from buffer
   def fetch_inactive_sessions
     current_time = Time.now
     inactive_sessions = Hash.new { |h, k| h[k] = {} }
@@ -49,6 +51,7 @@ class SessionActivityTracker < ApplicationConsumer
     end
   end
 
+  # Process inactive sessions from buffer
   def process_inactive_sessions(current_time, inactive_sessions)
     @buffer.each do |user_id, sessions|
       sessions.each do |session_id, activity_time|
@@ -62,18 +65,22 @@ class SessionActivityTracker < ApplicationConsumer
     end
   end
 
+  # Parse activity time
   def parse_activity_time(activity_time)
     activity_time.is_a?(String) ? Time.parse(activity_time) : activity_time
   end
 
+  # Cleanup empty users from buffer
   def cleanup_empty_users
     @buffer.delete_if { |_, sessions| sessions.empty? }
   end
 
+  # Yield inactive sessions every YIELD_INTERVAL seconds
   def should_yield?(inactive_sessions)
     !inactive_sessions.empty? && Time.now - @last_yield_time >= YIELD_INTERVAL
   end
 
+  # Flush inactive sessions to session expiry handler
   def flush_to_session_expiry_handler(inactive_sessions)
     return if inactive_sessions.empty?
 
@@ -85,6 +92,7 @@ class SessionActivityTracker < ApplicationConsumer
     @buffer.clear
   end
 
+  # Build expired session messages
   def build_expired_session_messages(inactive_sessions)
     inactive_sessions.flat_map do |user_id, sessions|
       sessions.map do |session_id, activity_time|

@@ -1,41 +1,41 @@
-## Kafka Play (Simple Session Management with Karafka)
+## Kafka Play (ruby + kafka)
 
-A simple Kafka & Ruby project using the [Karafka gem](https://github.com/karafka/karafka).
-
-This project is for learning purposes only, following real-world implementation.
+** A Simple Session Management with [Karafka gem](https://github.com/karafka/karafka) **
+This project is for learning purposes only, not producton ready code.
 
 ### Problem:
 
 Many applications, especially those requiring authentication (like web apps), need to manage user sessions. This includes handling session expiration due to inactivity or explicit logout. Automatically logging users out after a period of inactivity is crucial for both security and user experience.
 
+Such session events are continuously emitted, requiring a distributed service that can consume these events and send to DB or other services for further analysis. Kafka can fit here to solve this problem.
+
 ### Simple solution with kafka:
 
 **Producer:**
 
-A service emits user session activity events to a Kafka topic (e.g., user-sessions).
+Producer emits user session activity events to a Kafka our topic (named `session_logs`).
 Example event details:
 
 ```
-{ "user_id": 123,
+{
+ "user_id": 123,
  "session_id": "abc123",
  "activity_timestamp": "2025-02-07T12:00:00Z"
 }
 ```
 
-Events are produced whenever user activity occurs (e.g., clicking a button, viewing a page).
-
-In this case, a simple Rack task to emits such logs.
+In this case, i use a Rack task to emits such logs.
 
 **Consumer 1 (SessionActivityTracker):**
 
-- Listens to the user-sessions topic and tracks user activity.
-- Monitors inactivity by checking the time since the last recorded activity.
-- If a session remains idle for a predefined period (e.g., 1 hour), it marks the session as expired and logs the event.
+- Subscribed to the `session_logs` topic.
+- Identify inactive sessions by checking if `activity_timestamp` > `INACTIVITY_THRESHOLD`.
+- accumulat such expired session events and flush events to `expired_sessions` topic for every `YIELD_INTERVAL`.
 
 **Consumer 2: (SessionExpiryHandler):**
 
-- Listens for expired session events from Consumer 1.
-- Once an expired session is received, it can performs actions (Logging the user out, sending notification or revoke user tokens etc.)
+- Subscribed to `expired_sessions` topic and
+- Once an expired session events are received, it can performs actions (Logging the user out, sending notification or revoke user tokens etc.)(not implemented).
 
 ## Setup
 

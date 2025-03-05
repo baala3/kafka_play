@@ -10,7 +10,7 @@ namespace :producer do
     loop do
       payload = generate_session_payload
       produce_message(payload)
-      output_log(payload)
+      log_message(payload)
       sleep(SLEEP_INTERVAL)
     end
   end
@@ -21,12 +21,8 @@ namespace :producer do
     {
       user_id: rand(USER_RANGE),
       session_id: rand(SESSION_RANGE),
-      activity_time: generate_random_time
+      activity_time: (Time.now - rand(0..MAX_TIME_AGO)).iso8601
     }
-  end
-
-  def generate_random_time
-    (Time.now - rand(0..MAX_TIME_AGO)).iso8601
   end
 
   def produce_message(payload)
@@ -37,7 +33,7 @@ namespace :producer do
     )
   end
 
-  def output_log(payload)
+  def log_message(payload)
     puts "--- Produced: User #{payload[:user_id]}, " \
          "Session #{payload[:session_id]}, " \
          "Time: #{payload[:activity_time]} ---"
